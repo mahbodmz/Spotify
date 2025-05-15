@@ -1,16 +1,19 @@
-#ifndef ADMIN_H
-#define ADMIN_H
+#ifndef USER_H
+#define USER_H
 
 #include <string>
 using namespace std;
-class Admin {
+
+class User {
 private:
     string username;
     string password;
 
 public:
-    Admin();
+    User(); // Constructor
     bool login();
+    bool signUp();
 };
 
 #endif
+
