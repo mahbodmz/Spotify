@@ -23,7 +23,7 @@ int main() {
              admin.login();
              break;
         }
-        case(2): {
+        case(2): { 
             system("cls");
             User user;
             int userChoice;
