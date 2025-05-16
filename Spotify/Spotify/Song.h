@@ -1,30 +1,25 @@
 #ifndef SONG_H
 #define SONG_H
-#include <iostream>
+
+#include <string>
+#include "sqlite3.h"
+
 using namespace std;
+
 class Song {
 private:
-	string title;
-	string artist;
-	string releaseDate;
-	string genre;
-	int duration;
+    string title;
+    string artist;
+    string releaseDate;
+    string genre;
+    int duration; 
+    string filepath; 
 
 public:
-	Song();
-	Song(string t, string a, string r, string g, int d);
-	void setTitle(const string& t);
-	void setArtist(const string& a);
-	void setReleaseDate(const string& r);
-	void setGenre(const string& g);
-	void setDuration( int d);
+    Song(const string& title, const string& artist, const string& releaseDate,
+        const string& genre, int duration, const string& filepath);
 
-	string getTitle() const;
-	string getArtist() const;
-	string getReleaseDate() const;
-	string getGenre() const;
-	int getDuration() const;
-
-	void display() const;
+    void saveToDatabase(sqlite3* db);
 };
+
 #endif

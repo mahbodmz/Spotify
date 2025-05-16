@@ -1,36 +1,34 @@
-#include "Song.h"
+#include "song.h"
 #include <iostream>
 
-Song::Song() {
-    title = "";
-    artist = "";
-    releaseDate = "";
-    genre = "";
-    duration = 0;
+Song::Song(const string& title, const string& artist, const string& releaseDate,
+    const string& genre, int duration, const string& filepath)
+    : title(title), artist(artist), releaseDate(releaseDate),
+    genre(genre), duration(duration), filepath(filepath) {
 }
-Song::Song(string t,string a,string r,string g,int d) {
-    title = t;
-    artist = a;
-    releaseDate = r;
-    genre = g;
-    duration = d;
-}
-void Song::setTitle(const string& t) { title = t; }
-void Song::setArtist(const string& a) { artist = a; }
-void Song::setReleaseDate(const string& r) { releaseDate = r; }
-void Song::setGenre(const string& g) { genre = g; }
-void Song::setDuration(int d) { duration = d; }
 
-string Song::getTitle() const { return title; }
-string Song::getArtist() const { return artist; }
-string Song::getReleaseDate() const { return releaseDate; }
-string Song::getGenre() const { return genre; }
-int Song::getDuration() const { return duration; }
+void Song::saveToDatabase(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    const char* sql = "INSERT INTO songs (title, artist, release_date, genre, duration, filepath) VALUES (?, ?, ?, ?, ?, ?);";
 
-void Song::display() const {
-    cout << "Title: " << title << "\n";
-    cout << "Artist: " << artist << "\n";
-    cout << "Release Date: " << releaseDate << "\n";
-    cout << "Genre: " << genre << "\n";
-    cout << "Duration: " << duration << " seconds\n";
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, title.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, artist.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 3, releaseDate.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 4, genre.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 5, duration);
+    sqlite3_bind_text(stmt, 6, filepath.c_str(), -1, SQLITE_STATIC);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        cout << "Failed to insert song: " << sqlite3_errmsg(db) << endl;
+    }
+    else {
+        cout << "Song inserted successfully.\n";
+    }
+
+    sqlite3_finalize(stmt);
 }
