@@ -128,6 +128,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="Admin.cpp" />
+    <ClCompile Include="Artist.cpp" />
+    <ClCompile Include="Artist.h" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="Song.cpp" />
     <ClCompile Include="sqlite3.c" />

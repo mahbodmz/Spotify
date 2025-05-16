@@ -6,20 +6,7 @@
 using namespace std;
 
 int main() {
-    sqlite3* db;
-    int exit = sqlite3_open("spotify.db", &db);
-    if (exit) {
-        cout << "Failed to open DB: " << sqlite3_errmsg(db) << endl;
-        return -1;
-    }
-
     
-    string testFilePath = "C:/Users/Mahbod/OneDrive/Desktop/New folder/victory.wav.wav";
-
-    Song testSong("Test Title", "Test Artist", "2023-05-01", "Pop", 240, testFilePath);
-    testSong.saveToDatabase(db);
-
-    sqlite3_close(db);
     
     int choice;
 

@@ -30,6 +30,12 @@
     <ClCompile Include="Song.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Artist.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Artist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Admin.h">
