@@ -9,13 +9,6 @@ using namespace std;
 int main() {
 
 
-    Artist a("Imagine Dragons", 4, 20, "Believer-Thunder-Whatever It Takes");
-    if (a.saveToDatabase()) {
-        cout << "Artist added successfully.\n";
-    }
-    else {
-        cout << "Failed to add artist.\n";
-    }
     
     int choice;
 

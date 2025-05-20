@@ -14,10 +14,11 @@ private:
     string genre;
     int duration; 
     string filepath; 
+    int artist_id;
 
 public:
     Song(const string& title, const string& artist, const string& releaseDate,
-        const string& genre, int duration, const string& filepath);
+        const string& genre, int duration, const string& filepath, int artist_id);
 
     void saveToDatabase(sqlite3* db);
 };
