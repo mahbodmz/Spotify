@@ -2,41 +2,20 @@
 #include "Admin.h"
 #include "User.h"
 #include "song.h"
+#include "Artist.h"
 
 using namespace std;
 
 int main() {
 
-    sqlite3* db;
-    char* errorMsg;
 
-    int exit = sqlite3_open("spotify.db", &db);
-    if (exit) {
-        cerr << "Error opening DB: " << sqlite3_errmsg(db) << endl;
-        return -1;
-    }
-
-    const char* createArtistTable = R"(
-        CREATE TABLE IF NOT EXISTS artist (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            name TEXT UNIQUE NOT NULL,
-            num_albums INTEGER,
-            num_songs INTEGER,
-            released_songs TEXT
-        );
-    )";
-
-    exit = sqlite3_exec(db, createArtistTable, NULL, 0, &errorMsg);
-    if (exit != SQLITE_OK) {
-        cerr << "Error creating table: " << errorMsg << endl;
-        sqlite3_free(errorMsg);
+    Artist a("Imagine Dragons", 4, 20, "Believer-Thunder-Whatever It Takes");
+    if (a.saveToDatabase()) {
+        cout << "Artist added successfully.\n";
     }
     else {
-        cout << "Artist table created successfully." << endl;
+        cout << "Failed to add artist.\n";
     }
-
-    sqlite3_close(db);
-    
     
     int choice;
 

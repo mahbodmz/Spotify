@@ -1,39 +1,33 @@
 #include "artist.h"
 #include "sqlite3.h"
 #include <iostream>
+using namespace std;
 
-Artist::Artist(const string& name, int albums, int songs)
-    : name(name), numAlbums(albums), numSongs(songs) {
+Artist::Artist(string n, int albums, int songs, string released)
+    : name(n), numAlbums(albums), numSongs(songs), releasedSongs(released) {
 }
 
-string Artist::getName() const {
-    return name;
-}
-
-void Artist::saveToDatabase() {
+bool Artist::saveToDatabase() {
     sqlite3* db;
+    char* errorMsg;
+
     int exit = sqlite3_open("spotify.db", &db);
+    if (exit) {
+        cerr << "Error opening DB: " << sqlite3_errmsg(db) << endl;
+        return false;
+    }
+
+    string sql = "INSERT INTO artist (name, num_albums, num_songs, released_songs) VALUES ('" +
+        name + "', " + to_string(numAlbums) + ", " + to_string(numSongs) + ", '" + releasedSongs + "');";
+
+    exit = sqlite3_exec(db, sql.c_str(), NULL, 0, &errorMsg);
     if (exit != SQLITE_OK) {
-        cerr << "Failed to open database: " << sqlite3_errmsg(db) << endl;
-        return;
+        cerr << "Error inserting artist: " << errorMsg << endl;
+        sqlite3_free(errorMsg);
+        sqlite3_close(db);
+        return false;
     }
 
-    string sql = "INSERT INTO artist (name, num_albums, num_songs) VALUES (?, ?, ?);";
-    sqlite3_stmt* stmt;
-    if (sqlite3_prepare_v2(db, sql.c_str(), -1, &stmt, NULL) == SQLITE_OK) {
-        sqlite3_bind_text(stmt, 1, name.c_str(), -1, SQLITE_STATIC);
-        sqlite3_bind_int(stmt, 2, numAlbums);
-        sqlite3_bind_int(stmt, 3, numSongs);
-
-        if (sqlite3_step(stmt) == SQLITE_DONE)
-            cout << "Artist saved successfully.\n";
-        else
-            cerr << "Failed to save artist.\n";
-    }
-    else {
-        cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
-    }
-
-    sqlite3_finalize(stmt);
     sqlite3_close(db);
+    return true;
 }

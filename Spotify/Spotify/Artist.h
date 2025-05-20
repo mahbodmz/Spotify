@@ -9,11 +9,10 @@ private:
     string name;
     int numAlbums;
     int numSongs;
-
+    string releasedSongs;
 public:
-    Artist(const string& name, int albums, int songs);
-    void saveToDatabase();
-    string getName() const;
+    Artist(string n, int albums, int songs, string released);
+    bool saveToDatabase();
 };
 
 #endif
