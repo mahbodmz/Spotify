@@ -2,7 +2,7 @@
 #define ARTIST_H
 
 #include <string>
-
+#include "sqlite3.h"
 
 class Artist {
 private:
@@ -11,8 +11,10 @@ private:
     int numSongs;
     std::string releasedSongs;
 public:
+    Artist();
     Artist(std::string n, int albums, int songs, std::string released);
-    bool saveToDatabase();  
+    bool saveToDatabase(); 
+    void addArtist(sqlite3* db);
 };
 
 #endif

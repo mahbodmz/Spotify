@@ -1,7 +1,7 @@
 #include "admin.h"
 #include <iostream>
 #include "sqlite3.h"
-
+#include "artist.h"
 using namespace std;
 
 Admin::Admin() {}
@@ -86,9 +86,11 @@ void Admin::adminMenu(sqlite3* db) {
         case 1:
             cout << "Add Song functionality\n";
             break;
-        case 2:
-            cout << "Add Artist functionality\n";
+        case 2: {
+            Artist artist;
+            artist.addArtist(db);
             break;
+        }
         case 3:
             displayAllArtists(db);  // Calling the method from Admin class
             break;
