@@ -6,11 +6,20 @@
 
 using namespace std;
 
+
+
+
+
+
 int main() {
-
-
+    sqlite3* db;
     
     int choice;
+
+    if (sqlite3_open("C:/coding/Projects in C++/second project/Spotify/Spotify/Spotify/spotify.db", &db) != SQLITE_OK) {
+        cout << "Failed to open the database: " << sqlite3_errmsg(db) << endl;
+        return 1; // Exit if the database couldn't be opened
+    }
 
     while (true) {
         cout << "\n--- Spotify Menu ---\n";
@@ -26,6 +35,7 @@ int main() {
             system("cls");
              Admin admin;
              admin.login();
+             admin.adminMenu(db);
              break;
         }
         case(2): { 
@@ -48,6 +58,7 @@ int main() {
         case(3): {
             system("cls");
             cout << "Exiting...\n";
+            sqlite3_close(db);
             break;
         }
         default:

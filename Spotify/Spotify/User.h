@@ -2,12 +2,12 @@
 #define USER_H
 
 #include <string>
-using namespace std;
+
 
 class User {
 private:
-    string username;
-    string password;
+    std::string username;
+    std::string password;
 
 public:
     User(); // Constructor

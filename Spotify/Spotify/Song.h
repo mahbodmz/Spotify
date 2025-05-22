@@ -4,21 +4,21 @@
 #include <string>
 #include "sqlite3.h"
 
-using namespace std;
+
 
 class Song {
 private:
-    string title;
-    string artist;
-    string releaseDate;
-    string genre;
-    int duration; 
-    string filepath; 
-    int artist_id;
+    std::string title;
+    std::string artist;
+    std::string releaseDate;
+    std::string genre;
+    int duration;
+    std::string filepath;
+    int artistId;
 
 public:
-    Song(const string& title, const string& artist, const string& releaseDate,
-        const string& genre, int duration, const string& filepath, int artist_id);
+    Song(const std::string& title, const std::string& artist, const std::string& releaseDate,
+        const std::string& genre, int duration, const std::string& filepath, int artistId);
 
     void saveToDatabase(sqlite3* db);
 };

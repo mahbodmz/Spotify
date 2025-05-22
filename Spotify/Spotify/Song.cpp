@@ -1,14 +1,14 @@
 #include "song.h"
 #include <iostream>
-
+using namespace std;
 Song::Song(const string& title, const string& artist, const string& releaseDate,
-    const string& genre, int duration, const string& filepath, int artist_id)
+    const string& genre, int duration, const string& filepath, int  artistId)
     : title(title), artist(artist), releaseDate(releaseDate),
-    genre(genre), duration(duration), filepath(filepath) , artist_id(artist_id) {}
+    genre(genre), duration(duration), filepath(filepath) , artistId(artistId) {}
 
 void Song::saveToDatabase(sqlite3* db) {
     sqlite3_stmt* stmt;
-    const char* sql = "INSERT INTO songs (title, artist, release_date, genre, duration, filepath, artist_id) VALUES (?, ?, ?, ?, ?, ?,?);";
+    const char* sql = "INSERT INTO songs (title, artist, release_date, genre, duration, filepath, artistId) VALUES (?, ?, ?, ?, ?, ?,?);";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         cout << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
@@ -21,7 +21,7 @@ void Song::saveToDatabase(sqlite3* db) {
     sqlite3_bind_text(stmt, 4, genre.c_str(), -1, SQLITE_STATIC);
     sqlite3_bind_int(stmt, 5, duration);
     sqlite3_bind_text(stmt, 6, filepath.c_str(), -1, SQLITE_STATIC);
-    sqlite3_bind_int(stmt, 7, artist_id);
+    sqlite3_bind_int(stmt, 7, artistId);
     if (sqlite3_step(stmt) != SQLITE_DONE) {
         cout << "Failed to insert song: " << sqlite3_errmsg(db) << endl;
     }

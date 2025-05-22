@@ -2,17 +2,17 @@
 #define ARTIST_H
 
 #include <string>
-using namespace std;
+
 
 class Artist {
 private:
-    string name;
+    std::string name;
     int numAlbums;
     int numSongs;
-    string releasedSongs;
+    std::string releasedSongs;
 public:
-    Artist(string n, int albums, int songs, string released);
-    bool saveToDatabase();
+    Artist(std::string n, int albums, int songs, std::string released);
+    bool saveToDatabase();  
 };
 
 #endif
