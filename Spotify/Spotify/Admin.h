@@ -19,7 +19,7 @@ public:
     void deleteSong(sqlite3* db);
     void createPlaylist(sqlite3* db, std:: string& username);
     void viewMyPlaylists(sqlite3* db, const std::string& username);
-
+    void deletePlaylist(sqlite3* db);
 
 };
 

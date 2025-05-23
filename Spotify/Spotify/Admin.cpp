@@ -122,7 +122,8 @@ void Admin::adminMenu(sqlite3* db) {
         cout << "6. Delete Song\n";
         cout << "7. Create Playlist\n";
         cout << "8. View PLaylists\n";
-        cout << "9. Log out\n";
+        cout << "9. Delete Playlists\n";
+        cout << "10. Log out\n";
         cout << "Enter choice: ";
         cin >> adminChoice;
 
@@ -169,6 +170,10 @@ void Admin::adminMenu(sqlite3* db) {
             viewMyPlaylists(db, username);
             break;
         case 9:
+            viewMyPlaylists(db, username);
+            deletePlaylist(db);
+            break;
+        case 10:
             system("cls");
             cout << "Logging out...\n";
             return;  // Exit the admin menu and return to main menu
@@ -493,6 +498,30 @@ void Admin::viewMyPlaylists(sqlite3* db, const std::string& username) {
     }
     else {
         std::cerr << "Failed to query playlists: " << sqlite3_errmsg(db) << "\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+void Admin::deletePlaylist(sqlite3* db) {
+    int playlistId;
+    cout << "Enter the ID of the playlist you want to delete: ";
+    cin >> playlistId;
+
+    const char* deletePlaylistSQL = "DELETE FROM Playlist WHERE id = ?;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, deletePlaylistSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare delete statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        cout << "Playlist deleted successfully.\n";
+    }
+    else {
+        cerr << "Failed to delete playlist: " << sqlite3_errmsg(db) << endl;
     }
 
     sqlite3_finalize(stmt);
