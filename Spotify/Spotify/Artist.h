@@ -15,6 +15,7 @@ public:
     Artist(std::string n, int albums, int songs, std::string released);
     bool saveToDatabase(); 
     void addArtist(sqlite3* db);
+    void updateNumSongs(sqlite3* db, int artistId);
 };
 
 #endif

@@ -62,4 +62,20 @@ void Artist::addArtist(sqlite3* db) {
         cerr << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
     }
 }
+void Artist::updateNumSongs(sqlite3* db, int artistId) {
+    const char* sql = "UPDATE artist SET num_songs = num_songs + 1 WHERE id = ?;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, artistId);
+
+        if (sqlite3_step(stmt) != SQLITE_DONE) {
+            cerr << "Error updating number of songs for artist with ID: " << artistId << endl;
+        }
+        sqlite3_finalize(stmt);
+    }
+    else {
+        cerr << "Failed to prepare statement to update num_songs.\n";
+    }
+}
 
