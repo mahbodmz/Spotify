@@ -36,6 +36,12 @@
     <ClCompile Include="Artist.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="Playlist.h">
+      <Filter>Header Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Playlist.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Admin.h">

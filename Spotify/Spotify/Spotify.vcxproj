@@ -131,6 +131,8 @@
     <ClCompile Include="Artist.cpp" />
     <ClCompile Include="Artist.h" />
     <ClCompile Include="main.cpp" />
+    <ClCompile Include="Playlist.cpp" />
+    <ClCompile Include="Playlist.h" />
     <ClCompile Include="Song.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="User.cpp" />
