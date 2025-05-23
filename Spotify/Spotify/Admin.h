@@ -16,6 +16,7 @@ public:
     void addSong(sqlite3* db);
     void displaySongsByArtist(sqlite3* db, int artistId);
     void deleteArtist(sqlite3* db);
+    void deleteSong(sqlite3* db);
 };
 
 #endif

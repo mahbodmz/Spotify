@@ -118,12 +118,14 @@ void Admin::adminMenu(sqlite3* db) {
         cout << "3. View All Artists\n";
         cout << "4. View Songs by Artist\n";
         cout << "5. Delete Artit\n";
-        cout << "6. Log out\n";
+        cout << "6. Delete Song\n";
+        cout << "7. Log out\n";
         cout << "Enter choice: ";
         cin >> adminChoice;
 
         switch (adminChoice) {
         case 1:
+            system("cls");
             addSong(db);
             break;
         case 2: {
@@ -137,6 +139,7 @@ void Admin::adminMenu(sqlite3* db) {
             displayAllArtists(db);  // Calling the method from Admin class
             break;
         case 4: {
+            system("cls");
             displayAllArtists(db);  // reuse to help choose artist
             cout << "Enter Artist ID to view their songs (0 to cancel): ";
             int artistId;
@@ -146,11 +149,15 @@ void Admin::adminMenu(sqlite3* db) {
             break;
         }
         case 5:
+            system("cls");
             displayAllArtists(db);
             deleteArtist(db);
             break;
-
         case 6:
+            deleteSong(db);
+            break;
+        case 7:
+            system("cls");
             cout << "Logging out...\n";
             return;  // Exit the admin menu and return to main menu
         default:
@@ -269,5 +276,54 @@ void Admin::deleteArtist(sqlite3* db) {
         cerr << "Failed to prepare statement.\n";
     }
 }
+void Admin::deleteSong(sqlite3* db) {
+    int artistId;
+    cout << "\n--- Delete Song ---\n";
+    displayAllArtists(db);
+    cout << "Enter Artist ID to view their songs: ";
+    cin >> artistId;
+
+    const char* sqlSelect = "SELECT id, title FROM song WHERE artist_id = ?;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, sqlSelect, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, artistId);
+
+        cout << "\nSongs by Artist ID " << artistId << ":\n";
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int songId = sqlite3_column_int(stmt, 0);
+            const unsigned char* title = sqlite3_column_text(stmt, 1);
+            cout << "ID: " << songId << " | Title: " << title << "\n";
+        }
+
+        sqlite3_finalize(stmt);
+    }
+    else {
+        cerr << "Failed to retrieve songs.\n";
+        return;
+    }
+
+    int songIdToDelete;
+    cout << "Enter the ID of the song to delete: ";
+    cin >> songIdToDelete;
+
+    const char* sqlDelete = "DELETE FROM song WHERE id = ?;";
+    if (sqlite3_prepare_v2(db, sqlDelete, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, songIdToDelete);
+
+        if (sqlite3_step(stmt) == SQLITE_DONE) {
+            cout << "Song deleted successfully.\n";
+        }
+        else {
+            cerr << "Failed to delete song.\n";
+        }
+
+        sqlite3_finalize(stmt);
+    }
+    else {
+        cerr << "Failed to prepare delete statement.\n";
+    }
+}
+
 
 
