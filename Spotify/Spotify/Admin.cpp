@@ -19,6 +19,7 @@ bool Admin::login() {
     string inputUsername, inputPassword;
     cout << "Enter admin username: ";
     cin >> inputUsername;
+    this->username = inputUsername;
     cout << "Enter admin password: ";
     cin >> inputPassword;
 
@@ -119,7 +120,9 @@ void Admin::adminMenu(sqlite3* db) {
         cout << "4. View Songs by Artist\n";
         cout << "5. Delete Artit\n";
         cout << "6. Delete Song\n";
-        cout << "7. Log out\n";
+        cout << "7. Create Playlist\n";
+        cout << "8. View PLaylists\n";
+        cout << "9. Log out\n";
         cout << "Enter choice: ";
         cin >> adminChoice;
 
@@ -154,9 +157,18 @@ void Admin::adminMenu(sqlite3* db) {
             deleteArtist(db);
             break;
         case 6:
+            system("cls");
             deleteSong(db);
             break;
         case 7:
+            system("cls");
+            createPlaylist(db, username); // assuming `username` is available in Admin class
+            break;
+        case 8:
+            system("cls");
+            viewMyPlaylists(db, username);
+            break;
+        case 9:
             system("cls");
             cout << "Logging out...\n";
             return;  // Exit the admin menu and return to main menu
@@ -313,6 +325,21 @@ void Admin::deleteSong(sqlite3* db) {
 
         if (sqlite3_step(stmt) == SQLITE_DONE) {
             cout << "Song deleted successfully.\n";
+            const char* updateArtistSQL = "UPDATE artist SET num_songs = num_songs - 1 WHERE id = ?;";
+            sqlite3_stmt* updateStmt = nullptr;
+
+            if (sqlite3_prepare_v2(db, updateArtistSQL, -1, &updateStmt, nullptr) == SQLITE_OK) {
+                sqlite3_bind_int(updateStmt, 1, artistId);
+                if (sqlite3_step(updateStmt) != SQLITE_DONE) {
+                    std::cerr << "Failed to update artist's num_songs.\n";
+                }
+            }
+            else {
+                std::cerr << "Failed to prepare update statement for artist.\n";
+            }
+
+            sqlite3_finalize(updateStmt);
+
         }
         else {
             cerr << "Failed to delete song.\n";
@@ -324,6 +351,154 @@ void Admin::deleteSong(sqlite3* db) {
         cerr << "Failed to prepare delete statement.\n";
     }
 }
+
+void Admin::createPlaylist(sqlite3* db,  string& username) {
+    string name;
+    char choice;
+    int artistId = -1;
+
+    cout << "Enter playlist name: ";
+    cin.ignore();
+    getline(cin, name);
+
+    cout << "Does this playlist belong to an artist (album)? (y/n): ";
+    cin >> choice;
+
+    if (choice == 'y' || choice == 'Y') {
+        string artistQuery = "SELECT id, name FROM artist;";
+        sqlite3_stmt* stmt;
+        if (sqlite3_prepare_v2(db, artistQuery.c_str(), -1, &stmt, nullptr) == SQLITE_OK) {
+            cout << "Available Artists:\n";
+            while (sqlite3_step(stmt) == SQLITE_ROW) {
+                cout << sqlite3_column_int(stmt, 0) << ". " << sqlite3_column_text(stmt, 1) << endl;
+            }
+            sqlite3_finalize(stmt);
+        }
+
+        cout << "Enter artist ID to assign this playlist to: ";
+        cin >> artistId;
+    }
+    
+
+    // Get admin ID from username
+    int adminId = -1;
+    string findAdminId = "SELECT id FROM admin WHERE username = ?;";
+    sqlite3_stmt* adminStmt;
+    if (sqlite3_prepare_v2(db, findAdminId.c_str(), -1, &adminStmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(adminStmt, 1, username.c_str(), -1, SQLITE_STATIC);
+        if (sqlite3_step(adminStmt) == SQLITE_ROW) {
+            adminId = sqlite3_column_int(adminStmt, 0);
+        }
+        else {
+            cout << "Error: Admin not found in database.\n";
+            sqlite3_finalize(adminStmt);
+            return;
+        }
+        
+
+        sqlite3_finalize(adminStmt);
+    }
+
+    string insertSQL = "INSERT INTO Playlist (name, num_songs, artist_id, creator_type, creator_id) "
+        "VALUES (?, 0, ?, 'admin', ?);";
+
+    sqlite3_stmt* insertStmt;
+    if (sqlite3_prepare_v2(db, insertSQL.c_str(), -1, &insertStmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(insertStmt, 1, name.c_str(), -1, SQLITE_STATIC);
+
+        if (artistId == -1)
+            sqlite3_bind_null(insertStmt, 2);
+        else
+            sqlite3_bind_int(insertStmt, 2, artistId);
+
+        sqlite3_bind_int(insertStmt, 3, adminId);
+
+        if (sqlite3_step(insertStmt) == SQLITE_DONE) {
+            cout << "Playlist created successfully!\n";
+            if (artistId != -1) {
+                const char* updateArtistSQL = "UPDATE artist SET num_albums = num_albums + 1 WHERE id = ?;";
+                sqlite3_stmt* updateStmt = nullptr;
+
+                if (sqlite3_prepare_v2(db, updateArtistSQL, -1, &updateStmt, nullptr) == SQLITE_OK) {
+                    sqlite3_bind_int(updateStmt, 1, artistId);
+                    if (sqlite3_step(updateStmt) != SQLITE_DONE) {
+                        std::cerr << "Failed to update artist's numAlbums.\n";
+                    }
+                }
+                else {
+                    std::cerr << "Failed to prepare update statement for artist.\n";
+                }
+
+                sqlite3_finalize(updateStmt);
+            }
+        }
+        else {
+            cout << "Failed to create playlist: " << sqlite3_errmsg(db) << endl;
+        }
+
+        sqlite3_finalize(insertStmt);
+    }
+    else {
+        cout << "Failed to prepare insert statement: " << sqlite3_errmsg(db) << endl;
+    }
+}
+
+void Admin::viewMyPlaylists(sqlite3* db, const std::string& username) {
+    sqlite3_stmt* stmt = nullptr;
+    const char* findIdSQL = "SELECT id FROM admin WHERE username = ?;";
+    int adminId = -1;
+
+    if (sqlite3_prepare_v2(db, findIdSQL, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_TRANSIENT);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            adminId = sqlite3_column_int(stmt, 0);
+        }
+    }
+    sqlite3_finalize(stmt);
+
+    if (adminId == -1) {
+        std::cout << "Admin not found.\n";
+        return;
+    }
+
+    const char* query = R"(
+        SELECT p.id, p.name, p.num_songs, a.name
+        FROM Playlist p
+        LEFT JOIN Artist a ON p.artist_id = a.id
+        WHERE p.creator_type = 'admin' AND p.creator_id = ?;
+    )";
+
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, adminId);
+
+        std::cout << "\n--- Your Playlists ---\n";
+        bool found = false;
+
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            found = true;
+            int id = sqlite3_column_int(stmt, 0);
+            std::string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+            int numSongs = sqlite3_column_int(stmt, 2);
+            const unsigned char* artistText = sqlite3_column_text(stmt, 3);
+            std::string artistName = artistText ? reinterpret_cast<const char*>(artistText) : "None";
+
+            std::cout << "ID: " << id << ", Name: " << name
+                << ", Songs: " << numSongs
+                << ", Artist (if album): " << artistName << "\n";
+        }
+
+        if (!found) {
+            std::cout << "No playlists found.\n";
+        }
+    }
+    else {
+        std::cerr << "Failed to query playlists: " << sqlite3_errmsg(db) << "\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+
 
 
 

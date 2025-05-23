@@ -17,6 +17,10 @@ public:
     void displaySongsByArtist(sqlite3* db, int artistId);
     void deleteArtist(sqlite3* db);
     void deleteSong(sqlite3* db);
+    void createPlaylist(sqlite3* db, std:: string& username);
+    void viewMyPlaylists(sqlite3* db, const std::string& username);
+
+
 };
 
 #endif
