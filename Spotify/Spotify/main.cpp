@@ -8,11 +8,11 @@ using namespace std;
 
 
 
-
-
-
 int main() {
     sqlite3* db;
+
+    
+
     
     int choice;
 
@@ -20,7 +20,8 @@ int main() {
         cout << "Failed to open the database: " << sqlite3_errmsg(db) << endl;
         return 1; // Exit if the database couldn't be opened
     }
-
+    sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
+    
     while (true) {
         cout << "\n--- Spotify Menu ---\n";
         cout << "1. Login as Admin\n";

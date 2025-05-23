@@ -117,7 +117,8 @@ void Admin::adminMenu(sqlite3* db) {
         cout << "2. Add Artist\n";
         cout << "3. View All Artists\n";
         cout << "4. View Songs by Artist\n";
-        cout << "5. Log out\n";
+        cout << "5. Delete Artit\n";
+        cout << "6. Log out\n";
         cout << "Enter choice: ";
         cin >> adminChoice;
 
@@ -145,6 +146,11 @@ void Admin::adminMenu(sqlite3* db) {
             break;
         }
         case 5:
+            displayAllArtists(db);
+            deleteArtist(db);
+            break;
+
+        case 6:
             cout << "Logging out...\n";
             return;  // Exit the admin menu and return to main menu
         default:
@@ -239,4 +245,29 @@ void Admin::addSong(sqlite3* db) {
         cerr << "Failed to prepare song insert statement.\n";
     }
 }
+void Admin::deleteArtist(sqlite3* db) {
+    int artistId;
+    cout << "Enter the ID of the artist to delete: ";
+    cin >> artistId;
+
+    const char* sql = "DELETE FROM artist WHERE id = ?;";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, artistId);
+
+        if (sqlite3_step(stmt) == SQLITE_DONE) {
+            cout << "Artist deleted successfully.\n";
+        }
+        else {
+            cerr << "Failed to delete artist.\n";
+        }
+
+        sqlite3_finalize(stmt);
+    }
+    else {
+        cerr << "Failed to prepare statement.\n";
+    }
+}
+
 
