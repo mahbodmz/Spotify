@@ -124,7 +124,8 @@ void Admin::adminMenu(sqlite3* db) {
         cout << "8. View PLaylists\n";
         cout << "9. Delete Playlists\n";
         cout << "10. Add song to Playlist\n";
-        cout << "11. Log out\n";
+        cout << "11. Remove song from Playlist\n";
+        cout << "12. Log out\n";
         cout << "Enter choice: ";
         cin >> adminChoice;
 
@@ -178,6 +179,9 @@ void Admin::adminMenu(sqlite3* db) {
             addSongToPlaylist( db);
             break;
         case 11:
+            deleteSongFromPlaylist(db);
+            break;
+        case 12:
             system("cls");
             cout << "Logging out...\n";
             return;  
@@ -635,11 +639,12 @@ void Admin::addSongToPlaylist(sqlite3* db) {
     sqlite3_finalize(insertStmt);
 }
 void Admin::deleteSongFromPlaylist(sqlite3* db) {
+    viewMyPlaylists(db, username);
     int playlistId;
     cout << "Enter the ID of the playlist you want to modify: ";
     cin >> playlistId;
 
-    // Show songs in the playlist
+    
     const char* selectSongsSQL =
         "SELECT song.id, song.title, song.artist "
         "FROM song "
@@ -673,7 +678,7 @@ void Admin::deleteSongFromPlaylist(sqlite3* db) {
     cout << "Enter the ID of the song to delete from the playlist: ";
     cin >> songToDelete;
 
-    // Delete the song from the playlist_song table
+    
     const char* deleteSQL =
         "DELETE FROM playlist_song WHERE playlist_id = ? AND song_id = ?;";
 
@@ -687,8 +692,9 @@ void Admin::deleteSongFromPlaylist(sqlite3* db) {
 
     if (sqlite3_step(deleteStmt) != SQLITE_DONE) {
         cerr << "Failed to delete song from playlist.\n";
-    } else {
-        // Decrement num_songs in the Playlist table
+    }
+    else {
+        
         const char* updateSQL =
             "UPDATE Playlist SET num_songs = num_songs - 1 WHERE id = ?;";
         sqlite3_stmt* updateStmt;
