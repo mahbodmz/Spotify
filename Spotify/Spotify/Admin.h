@@ -22,6 +22,8 @@ public:
     void deletePlaylist(sqlite3* db);
     void addSongToPlaylist(sqlite3* db);
     void deleteSongFromPlaylist(sqlite3* db);
+    void viewSongsInPlaylist(sqlite3* db, const std::string& username);
+
 
 
 };
