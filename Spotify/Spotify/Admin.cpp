@@ -718,7 +718,7 @@ void Admin::deleteSongFromPlaylist(sqlite3* db) {
 }
 
 void Admin::viewSongsInPlaylist(sqlite3* db, const string& username) {
-    // Step 1: Show playlists created by this admin
+    
     const char* playlistSQL =
         "SELECT id, name FROM Playlist WHERE creator_type = 'admin' AND creator_id = (SELECT id FROM admin WHERE username = ?);";
 
@@ -744,12 +744,12 @@ void Admin::viewSongsInPlaylist(sqlite3* db, const string& username) {
         return;
     }
 
-    // Step 2: Let admin choose a playlist
+    
     int playlistId;
     cout << "\nEnter the ID of the playlist to view songs: ";
     cin >> playlistId;
 
-    // Step 3: Show songs in that playlist
+    
     const char* songSQL =
         "SELECT song.id, song.title, song.artist, song.genre "
         "FROM song "

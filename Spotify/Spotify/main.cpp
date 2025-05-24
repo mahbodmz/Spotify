@@ -57,10 +57,11 @@ int main() {
             cin >> userChoice;
 
             if (userChoice == 1) {
-                user.login();
+                user.login(db);
+                
             }
             else if (userChoice == 2) {
-                user.signUp();
+                user.signUp(db);
             }
             break;
         }
@@ -68,7 +69,7 @@ int main() {
             system("cls");
             cout << "Exiting...\n";
             sqlite3_close(db);
-            break;
+            return 0;
         }
         default:
             system("cls");
