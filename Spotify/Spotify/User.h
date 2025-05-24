@@ -17,6 +17,7 @@ public:
     bool signUp(sqlite3* db);
     void userMenu(sqlite3* db);
     void viewOrSearchSongs(sqlite3* db);
+    void viewOrSearchPlaylists(sqlite3* db);
     
     
 };

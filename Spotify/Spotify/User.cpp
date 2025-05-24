@@ -3,7 +3,7 @@
 #include "Artist.h"
 #include "sqlite3.h"
 #include "Admin.h"
-
+#include <limits>
 
 using namespace std;
 
@@ -115,10 +115,13 @@ void User::userMenu(sqlite3* db) {
             cout << "Logging out...\n";
             return;
         case 1: 
+            system("cls");
             viewOrSearchSongs(db);
             break;
         
         case 2: 
+            system("cls");
+            viewOrSearchPlaylists(db);
             break;
         
         default:
@@ -176,6 +179,51 @@ void User::viewOrSearchSongs(sqlite3* db) {
 
     sqlite3_finalize(stmt);
 }
+
+void User::viewOrSearchPlaylists(sqlite3* db) {
+    string searchQuery;
+    cout << "\n--- View or Search Playlists ---\n";
+    cout << "Enter playlist name to search (or press ENTER to view all): ";
+    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // flush leftover newline
+    getline(cin, searchQuery);
+
+    sqlite3_stmt* stmt;
+    const char* sql;
+
+    if (!searchQuery.empty()) {
+        sql = "SELECT id, name FROM playlist WHERE name LIKE ?;";
+    }
+    else {
+        sql = "SELECT id, name FROM playlist;";
+    }
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare playlist query: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    if (!searchQuery.empty()) {
+        string likeQuery = "%" + searchQuery + "%";
+        sqlite3_bind_text(stmt, 1, likeQuery.c_str(), -1, SQLITE_STATIC);
+    }
+
+    cout << "\n--- Playlists ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+
+        cout << "ID: " << id << " | Name: " << name << endl;
+    }
+
+    if (!found) {
+        cout << "No playlists found.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 
 
 
