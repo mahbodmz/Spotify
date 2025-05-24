@@ -10,11 +10,11 @@ private:
     int id;
     string name;
     int numSongs;
-    int artistId;  // -1 means not linked to any artist
+    int artistId;  
 
 public:
-    Playlist();  // Default constructor
+    Playlist();  
     void createPlaylist(sqlite3* db);
-    // You’ll later add: addSongToPlaylist(), deleteSongFromPlaylist(), deletePlaylist(), etc.
+    
 };
 #endif

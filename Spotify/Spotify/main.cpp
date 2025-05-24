@@ -22,7 +22,7 @@ int main() {
 
     if (sqlite3_open("C:/coding/Projects in C++/second project/Spotify/Spotify/Spotify/spotify.db", &db) != SQLITE_OK) {
         cout << "Failed to open the database: " << sqlite3_errmsg(db) << endl;
-        return 1; // Exit if the database couldn't be opened
+        return 1; 
     }
 
     sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
