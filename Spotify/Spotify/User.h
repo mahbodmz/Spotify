@@ -33,6 +33,7 @@ public:
     void removeLikedPlaylist(sqlite3* db);
     void createPlaylist(sqlite3* db);
     void viewMyPlaylists(sqlite3* db);
+    void deleteMyPlaylist(sqlite3* db);
     
     
 };

@@ -30,8 +30,8 @@ bool User::login(sqlite3* db) {
     sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        int dbUserId = sqlite3_column_int(stmt, 0);  // id is now at index 0
-        const unsigned char* dbPassword = sqlite3_column_text(stmt, 1); // password is at index 1
+        int dbUserId = sqlite3_column_int(stmt, 0);  
+        const unsigned char* dbPassword = sqlite3_column_text(stmt, 1); 
 
         if (password == (const char*)dbPassword) {
             user_id = dbUserId;
@@ -57,7 +57,7 @@ bool User::signUp(sqlite3* db) {
     cout << "Enter new username: ";
     cin >> username;
 
-    // Check if username already exists
+    
     const char* checkSQL = "SELECT COUNT(*) FROM users WHERE username = ?;";
     if (sqlite3_prepare_v2(db, checkSQL, -1, &stmt, NULL) != SQLITE_OK) {
         cout << "Failed to prepare SELECT statement: " << sqlite3_errmsg(db) << endl;
@@ -76,11 +76,11 @@ bool User::signUp(sqlite3* db) {
     }
     sqlite3_finalize(stmt);
 
-    // Input password
+    
     cout << "Enter password: ";
     cin >> password;
 
-    // Insert new user
+    
     const char* insertSQL = "INSERT INTO users (username, password) VALUES (?, ?);";
     if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, NULL) != SQLITE_OK) {
         cout << "Failed to prepare INSERT statement: " << sqlite3_errmsg(db) << endl;
@@ -181,9 +181,17 @@ void User::userMenu(sqlite3* db) {
         case 9:
             createPlaylist( db);
             break;
-        case 10:
+        case 10: {
+            int choice;
             viewMyPlaylists(db);
+            cout << "Do you want to delete a Playlist ?(1.Yes , etc.No)" << endl;
+            cin >> choice;
+            if (choice==1)
+            {
+                deleteMyPlaylist(db);
+            }
             break;
+        }
         default:
             cout << "Invalid choice ! try again\n";
             break;
@@ -301,13 +309,13 @@ void User::saveSong(sqlite3* db) {
     int song_id;
     
 
-    // Ask the user to select a song (this could be from a list of available songs)
+    
     cout << "Enter the ID of the song you want to save: ";
     cin >> song_id;
     debugCheckSongExists(db, song_id);
     debugCheckUserExists(db, getUserId());
 
-    // Check if the song is already saved by this user
+    
     sqlite3_stmt* stmt;
     const char* checkSQL = "SELECT COUNT(*) FROM SavedSongs WHERE user_id = ? AND song_id = ?;";
 
@@ -316,8 +324,8 @@ void User::saveSong(sqlite3* db) {
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, getUserId());  // Bind user_id
-    sqlite3_bind_int(stmt, 2, song_id);  // Bind song_id
+    sqlite3_bind_int(stmt, 1, getUserId());  
+    sqlite3_bind_int(stmt, 2, song_id);  
 
     int rc = sqlite3_step(stmt);
     if (rc == SQLITE_ROW) {
@@ -326,15 +334,15 @@ void User::saveSong(sqlite3* db) {
             cout << "This song is already saved to your account." << endl;
         }
         else {
-            // Insert song into SavedSongs table
+            
             const char* insertSQL = "INSERT INTO SavedSongs (user_id, song_id) VALUES (?, ?);";
             if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nullptr) != SQLITE_OK) {
                 cerr << "Failed to prepare insert statement: " << sqlite3_errmsg(db) << endl;
                 return;
             }
 
-            sqlite3_bind_int(stmt, 1, getUserId());  // Bind user_id
-            sqlite3_bind_int(stmt, 2, song_id);  // Bind song_id
+            sqlite3_bind_int(stmt, 1, getUserId());  
+            sqlite3_bind_int(stmt, 2, song_id);  
 
             rc = sqlite3_step(stmt);
             if (rc == SQLITE_DONE) {
@@ -364,7 +372,7 @@ void User::viewSavedSongs(sqlite3* db) {
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, getUserId());  // Bind user_id
+    sqlite3_bind_int(stmt, 1, getUserId()); 
 
     cout << "\n--- Saved Songs ---\n";
     bool found = false;
@@ -519,8 +527,8 @@ void User::removeSavedSong(sqlite3* db) {
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, user_id);  // Bind current user's ID
-    sqlite3_bind_int(stmt, 2, songId);   // Bind target song ID
+    sqlite3_bind_int(stmt, 1, user_id);  
+    sqlite3_bind_int(stmt, 2, songId);   
 
     if (sqlite3_step(stmt) == SQLITE_DONE) {
         if (sqlite3_changes(db) > 0) {
@@ -550,8 +558,8 @@ void User::removeLikedSong(sqlite3* db) {
         return;
     }
 
-    sqlite3_bind_int(stmt, 1, user_id);  // Current user ID
-    sqlite3_bind_int(stmt, 2, songId);   // Song to unlike
+    sqlite3_bind_int(stmt, 1, user_id);  
+    sqlite3_bind_int(stmt, 2, songId);   
 
     if (sqlite3_step(stmt) == SQLITE_DONE) {
         if (sqlite3_changes(db) > 0) {
@@ -603,7 +611,7 @@ void User::removeLikedPlaylist(sqlite3* db) {
 void User::createPlaylist(sqlite3* db) {
     string playlistName;
     cout << "Enter a name for your new playlist: ";
-    cin.ignore(); // clear leftover newline
+    cin.ignore(); 
     getline(cin, playlistName);
 
     sqlite3_stmt* stmt;
@@ -655,6 +663,61 @@ void User::viewMyPlaylists(sqlite3* db) {
     sqlite3_finalize(stmt);
 }
 
+void User::deleteMyPlaylist(sqlite3* db) {
+    int playlistId;
+    cout << "\nEnter the ID of the playlist you want to delete: ";
+    cin >> playlistId;
+
+    
+    sqlite3_stmt* checkStmt;
+    const char* checkSQL = "SELECT COUNT(*) FROM playlist WHERE id = ? AND creator_type = 'user' AND creator_id = ?;";
+    if (sqlite3_prepare_v2(db, checkSQL, -1, &checkStmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare check statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(checkStmt, 1, playlistId);
+    sqlite3_bind_int(checkStmt, 2, user_id);
+
+    int count = 0;
+    if (sqlite3_step(checkStmt) == SQLITE_ROW) {
+        count = sqlite3_column_int(checkStmt, 0);
+    }
+    sqlite3_finalize(checkStmt);
+
+    if (count == 0) {
+        cout << "Playlist not found or you don't have permission to delete it.\n";
+        return;
+    }
+
+    
+    sqlite3_stmt* deleteSongsStmt;
+    const char* deleteSongsSQL = "DELETE FROM PlaylistSongs WHERE playlist_id = ?;";
+    if (sqlite3_prepare_v2(db, deleteSongsSQL, -1, &deleteSongsStmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(deleteSongsStmt, 1, playlistId);
+        sqlite3_step(deleteSongsStmt);
+        sqlite3_finalize(deleteSongsStmt);
+    }
+
+    
+    sqlite3_stmt* deleteStmt;
+    const char* deleteSQL = "DELETE FROM playlist WHERE id = ?;";
+    if (sqlite3_prepare_v2(db, deleteSQL, -1, &deleteStmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare DELETE statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(deleteStmt, 1, playlistId);
+
+    if (sqlite3_step(deleteStmt) == SQLITE_DONE) {
+        cout << "Playlist deleted successfully.\n";
+    }
+    else {
+        cout << "Failed to delete playlist: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(deleteStmt);
+}
 
 
 
