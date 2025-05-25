@@ -21,7 +21,7 @@ bool User::login(sqlite3* db) {
     cout << "Enter password: ";
     cin >> password;
 
-    const char* selectSQL = "SELECT password FROM users WHERE username = ?;";
+    const char* selectSQL = "SELECT id, password FROM users WHERE username = ?;";
     if (sqlite3_prepare_v2(db, selectSQL, -1, &stmt, NULL) != SQLITE_OK) {
         cout << "Failed to prepare SELECT statement: " << sqlite3_errmsg(db) << endl;
         return false;
@@ -30,9 +30,12 @@ bool User::login(sqlite3* db) {
     sqlite3_bind_text(stmt, 1, username.c_str(), -1, SQLITE_STATIC);
 
     if (sqlite3_step(stmt) == SQLITE_ROW) {
-        const unsigned char* dbPassword = sqlite3_column_text(stmt, 0);
+        int dbUserId = sqlite3_column_int(stmt, 0);  // id is now at index 0
+        const unsigned char* dbPassword = sqlite3_column_text(stmt, 1); // password is at index 1
+
         if (password == (const char*)dbPassword) {
-            cout << "Login successful!" << endl;
+            user_id = dbUserId;
+            cout << "Login successful. Your user ID is " << user_id << endl;
             sqlite3_finalize(stmt);
             userMenu(db);
             return true;
@@ -42,6 +45,9 @@ bool User::login(sqlite3* db) {
     cout << "Invalid username or password!" << endl;
     sqlite3_finalize(stmt);
     return false;
+}
+int User::getUserId() {
+    return user_id;
 }
 
 
@@ -90,8 +96,11 @@ bool User::signUp(sqlite3* db) {
         return false;
     }
 
+    user_id = static_cast<int>(sqlite3_last_insert_rowid(db));  
+    cout << "Sign-up successful. Your user ID is " << user_id << endl;
     sqlite3_finalize(stmt);
-    cout << "Sign-up successful! You can now log in with your username and password." << endl;
+
+    
     return true;
 }
 
@@ -102,9 +111,11 @@ void User::userMenu(sqlite3* db) {
         cout << "1.View all the songs\n";
         cout << "2.View all Playlists\n";
         cout << "3.Saved songs\n";
-        cout << "4.Liked songs\n";
-        cout << "5.Liked Playlists\n";
-        cout << "6.View my Playlists\n";
+        cout << "4.Save a song\n";
+        cout << "5.Liked songs\n";
+        cout << "6.Like a song\n";
+        cout << "7.Liked Playlists\n";
+        cout << "8.View my Playlists\n";
         cout << "0.Logout\n";
         cin >> userchoice;
         
@@ -121,9 +132,21 @@ void User::userMenu(sqlite3* db) {
         
         case 2: 
             system("cls");
-            viewOrSearchPlaylists(db);
+            viewAllPlaylists(db);
             break;
-        
+        case 3:
+            viewSavedSongs(db);
+            break;
+            
+        case 4:
+            saveSong(db);
+            break;
+        case 5:
+             viewLikedSongs( db);
+             break;
+        case 6:
+            likeSong( db);
+            break;
         default:
             cout << "Invalid choice ! try again\n";
             break;
@@ -180,40 +203,22 @@ void User::viewOrSearchSongs(sqlite3* db) {
     sqlite3_finalize(stmt);
 }
 
-void User::viewOrSearchPlaylists(sqlite3* db) {
-    string searchQuery;
-    cout << "\n--- View or Search Playlists ---\n";
-    cout << "Enter playlist name to search (or press ENTER to view all): ";
-    cin.ignore(numeric_limits<streamsize>::max(), '\n'); // flush leftover newline
-    getline(cin, searchQuery);
-
+void User::viewAllPlaylists(sqlite3* db) {
     sqlite3_stmt* stmt;
-    const char* sql;
-
-    if (!searchQuery.empty()) {
-        sql = "SELECT id, name FROM playlist WHERE name LIKE ?;";
-    }
-    else {
-        sql = "SELECT id, name FROM playlist;";
-    }
+    const char* sql = "SELECT id, name FROM playlist;";
 
     if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
         cerr << "Failed to prepare playlist query: " << sqlite3_errmsg(db) << endl;
         return;
     }
 
-    if (!searchQuery.empty()) {
-        string likeQuery = "%" + searchQuery + "%";
-        sqlite3_bind_text(stmt, 1, likeQuery.c_str(), -1, SQLITE_STATIC);
-    }
-
     cout << "\n--- Playlists ---\n";
     bool found = false;
+
     while (sqlite3_step(stmt) == SQLITE_ROW) {
         found = true;
         int id = sqlite3_column_int(stmt, 0);
         string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
-
         cout << "ID: " << id << " | Name: " << name << endl;
     }
 
@@ -223,6 +228,189 @@ void User::viewOrSearchPlaylists(sqlite3* db) {
 
     sqlite3_finalize(stmt);
 }
+void User:: debugCheckSongExists(sqlite3* db, int songId) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT COUNT(*) FROM song WHERE id = ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, songId);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            int count = sqlite3_column_int(stmt, 0);
+            cout << "Song ID " << songId << (count > 0 ? " exists." : " does NOT exist.") << endl;
+        }
+    }
+    sqlite3_finalize(stmt);
+}
+
+void User:: debugCheckUserExists(sqlite3* db, int userId) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT COUNT(*) FROM users WHERE id = ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, userId);
+        if (sqlite3_step(stmt) == SQLITE_ROW) {
+            int count = sqlite3_column_int(stmt, 0);
+            cout << "User ID " << userId << (count > 0 ? " exists." : " does NOT exist.") << endl;
+        }
+    }
+    sqlite3_finalize(stmt);
+}
+
+
+
+
+
+void User::saveSong(sqlite3* db) {
+    int song_id;
+    
+
+    // Ask the user to select a song (this could be from a list of available songs)
+    cout << "Enter the ID of the song you want to save: ";
+    cin >> song_id;
+    debugCheckSongExists(db, song_id);
+    debugCheckUserExists(db, getUserId());
+
+    // Check if the song is already saved by this user
+    sqlite3_stmt* stmt;
+    const char* checkSQL = "SELECT COUNT(*) FROM SavedSongs WHERE user_id = ? AND song_id = ?;";
+
+    if (sqlite3_prepare_v2(db, checkSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare check statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, getUserId());  // Bind user_id
+    sqlite3_bind_int(stmt, 2, song_id);  // Bind song_id
+
+    int rc = sqlite3_step(stmt);
+    if (rc == SQLITE_ROW) {
+        int count = sqlite3_column_int(stmt, 0);
+        if (count > 0) {
+            cout << "This song is already saved to your account." << endl;
+        }
+        else {
+            // Insert song into SavedSongs table
+            const char* insertSQL = "INSERT INTO SavedSongs (user_id, song_id) VALUES (?, ?);";
+            if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+                cerr << "Failed to prepare insert statement: " << sqlite3_errmsg(db) << endl;
+                return;
+            }
+
+            sqlite3_bind_int(stmt, 1, getUserId());  // Bind user_id
+            sqlite3_bind_int(stmt, 2, song_id);  // Bind song_id
+
+            rc = sqlite3_step(stmt);
+            if (rc == SQLITE_DONE) {
+                cout << "Song successfully saved!" << endl;
+            }
+            else {
+                cout << "Failed to save song: " << sqlite3_errmsg(db) << endl;
+            }
+        }
+    }
+    else {
+        cerr << "Error checking for existing saved song: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+
+void User::viewSavedSongs(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT song.id, song.title, song.artist FROM song "
+        "JOIN SavedSongs ON song.id = SavedSongs.song_id "
+        "WHERE SavedSongs.user_id = ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare saved songs query: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, getUserId());  // Bind user_id
+
+    cout << "\n--- Saved Songs ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+
+        cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist << endl;
+    }
+
+    if (!found) {
+        cout << "You have no saved songs." << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::likeSong(sqlite3* db) {
+    int songId;
+    cout << "Enter the Song ID to like: ";
+    cin >> songId;
+
+    const char* sql = "INSERT INTO LikedSongs (user_id, song_id) VALUES (?, ?);";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+    sqlite3_bind_int(stmt, 2, songId);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        cout << "Failed to like song: " << sqlite3_errmsg(db) << endl;
+    }
+    else {
+        cout << "Song liked successfully!" << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::viewLikedSongs(sqlite3* db) {
+    const char* sql = R"(
+        SELECT song.id, song.title, song.artist, song.genre, song.release_date
+        FROM song
+        JOIN LikedSongs ON song.id = LikedSongs.song_id
+        WHERE LikedSongs.user_id = ?;
+    )";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+
+    cout << "--- Liked Songs ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        const unsigned char* title = sqlite3_column_text(stmt, 1);
+        const unsigned char* artist = sqlite3_column_text(stmt, 2);
+        const unsigned char* genre = sqlite3_column_text(stmt, 3);
+        const unsigned char* release_date = sqlite3_column_text(stmt, 4);
+
+        cout << "ID: " << id << ", Title: " << title
+            << ", Artist: " << artist << ", Genre: " << genre
+            << ", Release Date: " << release_date << endl;
+    }
+
+    if (!found) {
+        cout << "You haven't liked any songs yet.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+
 
 
 

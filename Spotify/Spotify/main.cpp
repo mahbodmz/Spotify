@@ -9,15 +9,9 @@ using namespace std;
 
 
 
-
-
-
 int main() {
     sqlite3* db;
 
-    
-
-    
     int choice;
 
     if (sqlite3_open("C:/coding/Projects in C++/second project/Spotify/Spotify/Spotify/spotify.db", &db) != SQLITE_OK) {
@@ -26,9 +20,6 @@ int main() {
     }
 
     sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
-    
-    
-
     
     while (true) {
         cout << "\n--- Spotify Menu ---\n";
@@ -57,11 +48,15 @@ int main() {
             cin >> userChoice;
 
             if (userChoice == 1) {
-                user.login(db);
+                if (user.login(db)) {
+                    user.userMenu(db);  // only proceed to menu if login was successful
+                }
                 
             }
             else if (userChoice == 2) {
-                user.signUp(db);
+                if (user.signUp(db)) {
+                    user.userMenu(db);  // go to menu after successful sign-up
+                }
             }
             break;
         }
