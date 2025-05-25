@@ -116,7 +116,8 @@ void User::userMenu(sqlite3* db) {
         cout << "6.Like a song\n";
         cout << "7.Liked Playlists\n";
         cout << "8.Like a Playlist\n";
-        cout << "9.View my Playlists\n";
+        cout << "9.Create new Playlist\n";
+        cout << "10.View my Playlists\n";
         cout << "0.Logout\n";
         cin >> userchoice;
         
@@ -176,6 +177,12 @@ void User::userMenu(sqlite3* db) {
         }
         case 8:
             likePlaylist( db);
+            break;
+        case 9:
+            createPlaylist( db);
+            break;
+        case 10:
+            viewMyPlaylists(db);
             break;
         default:
             cout << "Invalid choice ! try again\n";
@@ -592,6 +599,61 @@ void User::removeLikedPlaylist(sqlite3* db) {
     sqlite3_finalize(stmt);
 }
 
+
+void User::createPlaylist(sqlite3* db) {
+    string playlistName;
+    cout << "Enter a name for your new playlist: ";
+    cin.ignore(); // clear leftover newline
+    getline(cin, playlistName);
+
+    sqlite3_stmt* stmt;
+    const char* insertSQL = "INSERT INTO playlist (name, num_songs, artist_id, creator_type, creator_id) VALUES (?, 0, NULL, 'user', ?);";
+
+    if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare INSERT statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, playlistName.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_int(stmt, 2, user_id);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        cout << "Playlist \"" << playlistName << "\" created successfully.\n";
+    }
+    else {
+        cout << "Failed to create playlist: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+void User::viewMyPlaylists(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    const char* selectSQL = "SELECT id, name, num_songs FROM playlist WHERE creator_type = 'user' AND creator_id = ?;";
+
+    if (sqlite3_prepare_v2(db, selectSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare SELECT statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+
+    cout << "\n--- Your Playlists ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const unsigned char* name = sqlite3_column_text(stmt, 1);
+        int numSongs = sqlite3_column_int(stmt, 2);
+
+        cout << "ID: " << id << " | Name: " << name << " | Songs: " << numSongs << endl;
+        found = true;
+    }
+
+    if (!found) {
+        cout << "You haven't created any playlists yet.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
 
 
 
