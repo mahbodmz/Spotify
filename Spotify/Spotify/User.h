@@ -37,6 +37,8 @@ public:
     void addSongToMyPlaylist(sqlite3* db);
     void viewSongsInMyPlaylist(sqlite3* db);
     void removeSongFromMyPlaylist(sqlite3* db);
+    void viewSongsInLikedPlaylist(sqlite3* db);
+    void viewSongsInAnyPlaylist(sqlite3* db);
     
     
 };

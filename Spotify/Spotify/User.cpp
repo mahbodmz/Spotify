@@ -132,10 +132,26 @@ void User::userMenu(sqlite3* db) {
             viewOrSearchSongs(db);
             break;
         
-        case 2: 
+        case 2: {
+            int choice;
             system("cls");
             viewAllPlaylists(db);
+            cout << "1.View songs in Playlist\n";
+            cout << "2.Exit\n";
+            cin >> choice;
+            switch (choice)
+            {
+            case 1:
+                viewSongsInAnyPlaylist( db);
+                break;
+            case 2:
+                break;
+            default:
+                cout << "Invalid choice!!\n";
+                break;
+            }
             break;
+        }
         case 3: {
             system("cls");
             int choice;
@@ -172,11 +188,20 @@ void User::userMenu(sqlite3* db) {
             system("cls");
             int choice;
             viewLikedPlaylists(db);
-            cout << "Do you want to delete a Playlist ?(1.Yes , etc.No)" << endl;
+            cout << "1.Remove a Playlist\n";
+            cout << "2.View the songs of a Playlist\n";
             cin >> choice;
-            if (choice == 1)
+            switch (choice)
             {
+            case 1:
                 removeLikedPlaylist( db);
+                break;
+            case 2:
+                viewSongsInLikedPlaylist( db);
+                break;
+            default:
+                cout << "Invalid choice!!\n";
+                break;
             }
             break;
         }
@@ -1000,6 +1025,133 @@ void User::removeSongFromMyPlaylist(sqlite3* db) {
     }
 }
 
+
+void User::viewSongsInLikedPlaylist(sqlite3* db) {
+    sqlite3_stmt* stmt;
+
+    const char* likedPlaylistsSQL =
+        "SELECT Playlist.id, Playlist.name FROM LikedPlaylists "
+        "JOIN Playlist ON LikedPlaylists.playlist_id = Playlist.id "
+        "WHERE LikedPlaylists.user_id = ?;";
+
+    if (sqlite3_prepare_v2(db, likedPlaylistsSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare liked playlists query.\n";
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+
+    cout << "\n--- Your Liked Playlists ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        cout << "ID: " << id << " | Name: " << name << endl;
+    }
+    sqlite3_finalize(stmt);
+
+    if (!found) {
+        cout << "You have no liked playlists.\n";
+        return;
+    }
+
+    int playlistId;
+    cout << "\nEnter the ID of the liked playlist to view songs: ";
+    cin >> playlistId;
+
+    const char* songSQL =
+        "SELECT song.id, song.title, song.artist, song.genre "
+        "FROM song "
+        "JOIN playlist_song ON song.id = playlist_song.song_id "
+        "WHERE playlist_song.playlist_id = ?;";
+
+    if (sqlite3_prepare_v2(db, songSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare song query.\n";
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+
+    cout << "\n--- Songs in Playlist ---\n";
+    found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int songId = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        string genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        cout << "ID: " << songId << " | Title: " << title << " | Artist: " << artist << " | Genre: " << genre << endl;
+    }
+
+    if (!found) {
+        cout << "This playlist has no songs.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::viewSongsInAnyPlaylist(sqlite3* db) {
+    sqlite3_stmt* stmt;
+
+    const char* allPlaylistsSQL =
+        "SELECT id, name FROM Playlist;";
+
+    if (sqlite3_prepare_v2(db, allPlaylistsSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare playlists query.\n";
+        return;
+    }
+
+    cout << "\n--- All Playlists in the System ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string name = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        cout << "ID: " << id << " | Name: " << name << endl;
+    }
+    sqlite3_finalize(stmt);
+
+    if (!found) {
+        cout << "There are no playlists in the system.\n";
+        return;
+    }
+
+    int playlistId;
+    cout << "\nEnter the ID of the playlist to view songs: ";
+    cin >> playlistId;
+
+    const char* songSQL =
+        "SELECT song.id, song.title, song.artist, song.genre "
+        "FROM song "
+        "JOIN playlist_song ON song.id = playlist_song.song_id "
+        "WHERE playlist_song.playlist_id = ?;";
+
+    if (sqlite3_prepare_v2(db, songSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare song query.\n";
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+
+    cout << "\n--- Songs in Playlist ---\n";
+    found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int songId = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        string genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        cout << "ID: " << songId << " | Title: " << title
+            << " | Artist: " << artist << " | Genre: " << genre << endl;
+    }
+
+    if (!found) {
+        cout << "This playlist has no songs.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
 
 
 
