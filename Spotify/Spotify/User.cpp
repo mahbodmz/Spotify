@@ -137,6 +137,7 @@ void User::userMenu(sqlite3* db) {
             viewAllPlaylists(db);
             break;
         case 3: {
+            system("cls");
             int choice;
             viewSavedSongs(db);
             cout << "Do you want to delete a Song ?(1.Yes , etc.No)" << endl;
@@ -148,9 +149,11 @@ void User::userMenu(sqlite3* db) {
             break;
         }
         case 4:
+            system("cls");
             saveSong(db);
             break;
         case 5: {
+            system("cls");
             int choice;
             viewLikedSongs(db);
             cout << "Do you want to delete a Song ?(1.Yes , etc.No)" << endl;
@@ -162,12 +165,14 @@ void User::userMenu(sqlite3* db) {
             break;
         }
         case 6:
+            system("cls");
             likeSong( db);
             break;
         case 7: {
+            system("cls");
             int choice;
             viewLikedPlaylists(db);
-            cout << "Do you want to delete a Song ?(1.Yes , etc.No)" << endl;
+            cout << "Do you want to delete a Playlist ?(1.Yes , etc.No)" << endl;
             cin >> choice;
             if (choice == 1)
             {
@@ -176,23 +181,40 @@ void User::userMenu(sqlite3* db) {
             break;
         }
         case 8:
+            system("cls");
             likePlaylist( db);
             break;
         case 9:
+            system("cls");
             createPlaylist( db);
             break;
         case 10: {
+            system("cls");
             int choice;
             viewMyPlaylists(db);
-            cout << "Do you want to delete a Playlist ?(1.Yes , etc.No)" << endl;
+            cout << "1.Delete a Playlist\n";
+            cout << "2.Add Songs to Playlist\n";
+            cout << "3.Back to menu\n";
             cin >> choice;
-            if (choice==1)
+            switch (choice)
             {
+            case 1:
                 deleteMyPlaylist(db);
+                break;
+            case 2:
+                addSongToMyPlaylist( db);
+                break;
+            case 3:
+                system("cls");
+                break;
+            default:
+                cout << "Invalid Choice!\n";
+                break;
             }
             break;
         }
         default:
+            system("cls");
             cout << "Invalid choice ! try again\n";
             break;
         }
@@ -717,6 +739,88 @@ void User::deleteMyPlaylist(sqlite3* db) {
     }
 
     sqlite3_finalize(deleteStmt);
+}
+
+void User::addSongToMyPlaylist(sqlite3* db) {
+    int playlistId, songId;
+
+    // Show user's playlists
+    cout << "\n--- Your Playlists ---\n";
+    sqlite3_stmt* stmt;
+    const char* showSQL = "SELECT id, name FROM playlist WHERE creator_type = 'user' AND creator_id = ?;";
+    if (sqlite3_prepare_v2(db, showSQL, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, user_id);
+
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int id = sqlite3_column_int(stmt, 0);
+            const unsigned char* name = sqlite3_column_text(stmt, 1);
+            cout << "ID: " << id << " | Name: " << name << endl;
+        }
+        sqlite3_finalize(stmt);
+    }
+    else {
+        cout << "Failed to fetch playlists: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    // Get playlist ID
+    cout << "\nEnter the ID of the playlist you want to add a song to: ";
+    cin >> playlistId;
+
+    // Show all songs
+    cout << "\n--- All Songs ---\n";
+    const char* showSongsSQL = "SELECT id, title, artist FROM song;";
+    if (sqlite3_prepare_v2(db, showSongsSQL, -1, &stmt, nullptr) == SQLITE_OK) {
+        while (sqlite3_step(stmt) == SQLITE_ROW) {
+            int id = sqlite3_column_int(stmt, 0);
+            const unsigned char* title = sqlite3_column_text(stmt, 1);
+            const unsigned char* artist = sqlite3_column_text(stmt, 2);
+            cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist << endl;
+        }
+        sqlite3_finalize(stmt);
+    }
+    else {
+        cout << "Failed to fetch songs: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    cout << "\nEnter the ID of the song you want to add: ";
+    cin >> songId;
+
+    // Insert into PlaylistSongs
+    const char* insertSQL = "INSERT INTO PlaylistSongs (playlist_id, song_id) VALUES (?, ?);";
+    if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare INSERT: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+    sqlite3_bind_int(stmt, 2, songId);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        cout << "Song added to playlist successfully.\n";
+    }
+    else {
+        cout << "Failed to add song to playlist: " << sqlite3_errmsg(db) << endl;
+        sqlite3_finalize(stmt);
+        return;
+    }
+    sqlite3_finalize(stmt);
+
+    
+    const char* updateSQL = "UPDATE playlist SET num_songs = num_songs + 1 WHERE id = ?;";
+    if (sqlite3_prepare_v2(db, updateSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare UPDATE: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+
+    if (sqlite3_step(stmt) != SQLITE_DONE) {
+        cout << "Failed to update num_songs: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
 }
 
 

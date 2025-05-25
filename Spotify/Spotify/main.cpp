@@ -10,6 +10,7 @@ using namespace std;
 
 
 
+
 int main() {
     sqlite3* db;
 
@@ -22,7 +23,7 @@ int main() {
 
     sqlite3_exec(db, "PRAGMA foreign_keys = ON;", nullptr, nullptr, nullptr);
     
-
+    
     while (true) {
         cout << "\n--- Spotify Menu ---\n";
         cout << "1. Login as Admin\n";
