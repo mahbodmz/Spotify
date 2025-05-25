@@ -26,6 +26,9 @@ public:
     void debugCheckSongExists(sqlite3* db, int songId);
     void likeSong(sqlite3* db);
     void viewLikedSongs(sqlite3* db);
+    void likePlaylist(sqlite3* db);
+    void viewLikedPlaylists(sqlite3* db);
+
     
     
 };

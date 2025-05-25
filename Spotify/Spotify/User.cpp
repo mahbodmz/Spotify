@@ -115,7 +115,8 @@ void User::userMenu(sqlite3* db) {
         cout << "5.Liked songs\n";
         cout << "6.Like a song\n";
         cout << "7.Liked Playlists\n";
-        cout << "8.View my Playlists\n";
+        cout << "8.Like a Playlist\n";
+        cout << "9.View my Playlists\n";
         cout << "0.Logout\n";
         cin >> userchoice;
         
@@ -146,6 +147,12 @@ void User::userMenu(sqlite3* db) {
              break;
         case 6:
             likeSong( db);
+            break;
+        case 7:
+            viewLikedPlaylists(db);
+            break;
+        case 8:
+            likePlaylist( db);
             break;
         default:
             cout << "Invalid choice ! try again\n";
@@ -411,8 +418,64 @@ void User::viewLikedSongs(sqlite3* db) {
     sqlite3_finalize(stmt);
 }
 
+void User::likePlaylist(sqlite3* db) {
+    int playlistId;
+    cout << "Enter the Playlist ID you want to like: ";
+    cin >> playlistId;
+
+    const char* insertSQL = "INSERT INTO LikedPlaylists (user_id, playlist_id) VALUES (?, ?);";
+    sqlite3_stmt* stmt;
+
+    if (sqlite3_prepare_v2(db, insertSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+    sqlite3_bind_int(stmt, 2, playlistId);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        cout << "Playlist liked successfully.\n";
+    }
+    else {
+        cout << "Failed to like playlist: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
 
 
+void User::viewLikedPlaylists(sqlite3* db) {
+    const char* query = R"(
+        SELECT playlist.id, playlist.name
+        FROM LikedPlaylists
+        JOIN playlist ON LikedPlaylists.playlist_id = playlist.id
+        WHERE LikedPlaylists.user_id = ?;
+    )";
+
+    sqlite3_stmt* stmt;
+    if (sqlite3_prepare_v2(db, query, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare SELECT: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+
+    bool found = false;
+    cout << "--- Your Liked Playlists ---\n";
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);
+        const char* name = (const char*)sqlite3_column_text(stmt, 1);
+        cout << "ID: " << id << " | Name: " << name << endl;
+        found = true;
+    }
+
+    if (!found) {
+        cout << "You haven't liked any playlists yet.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
 
 
 
