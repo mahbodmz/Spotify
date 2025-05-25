@@ -135,22 +135,45 @@ void User::userMenu(sqlite3* db) {
             system("cls");
             viewAllPlaylists(db);
             break;
-        case 3:
+        case 3: {
+            int choice;
             viewSavedSongs(db);
+            cout << "Do you want to delete a Song ?(1.Yes , etc.No)" << endl;
+            cin >> choice;
+            if (choice == 1)
+            {
+                removeSavedSong(db);
+            }
             break;
-            
+        }
         case 4:
             saveSong(db);
             break;
-        case 5:
-             viewLikedSongs( db);
-             break;
+        case 5: {
+            int choice;
+            viewLikedSongs(db);
+            cout << "Do you want to delete a Song ?(1.Yes , etc.No)" << endl;
+            cin >> choice;
+            if (choice == 1)
+            {
+                removeLikedSong( db);
+            }
+            break;
+        }
         case 6:
             likeSong( db);
             break;
-        case 7:
+        case 7: {
+            int choice;
             viewLikedPlaylists(db);
+            cout << "Do you want to delete a Song ?(1.Yes , etc.No)" << endl;
+            cin >> choice;
+            if (choice == 1)
+            {
+                removeLikedPlaylist( db);
+            }
             break;
+        }
         case 8:
             likePlaylist( db);
             break;
@@ -476,7 +499,98 @@ void User::viewLikedPlaylists(sqlite3* db) {
 
     sqlite3_finalize(stmt);
 }
+void User::removeSavedSong(sqlite3* db) {
+    int songId;
+    cout << "Enter the ID of the song you want to remove from your saved songs: ";
+    cin >> songId;
 
+    sqlite3_stmt* stmt;
+    const char* deleteSQL = "DELETE FROM SavedSongs WHERE user_id = ? AND song_id = ?;";
+
+    if (sqlite3_prepare_v2(db, deleteSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare DELETE statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);  // Bind current user's ID
+    sqlite3_bind_int(stmt, 2, songId);   // Bind target song ID
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        if (sqlite3_changes(db) > 0) {
+            cout << "Song removed from your saved list.\n";
+        }
+        else {
+            cout << "That song was not in your saved list.\n";
+        }
+    }
+    else {
+        cout << "Failed to remove song: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::removeLikedSong(sqlite3* db) {
+    int songId;
+    cout << "Enter the ID of the song you want to remove from your liked songs: ";
+    cin >> songId;
+
+    sqlite3_stmt* stmt;
+    const char* deleteSQL = "DELETE FROM LikedSongs WHERE user_id = ? AND song_id = ?;";
+
+    if (sqlite3_prepare_v2(db, deleteSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare DELETE statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);  // Current user ID
+    sqlite3_bind_int(stmt, 2, songId);   // Song to unlike
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        if (sqlite3_changes(db) > 0) {
+            cout << "Song removed from your liked songs.\n";
+        }
+        else {
+            cout << "That song was not in your liked songs.\n";
+        }
+    }
+    else {
+        cout << "Failed to remove liked song: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::removeLikedPlaylist(sqlite3* db) {
+    int playlistId;
+    cout << "Enter the ID of the playlist you want to remove from your liked playlists: ";
+    cin >> playlistId;
+
+    sqlite3_stmt* stmt;
+    const char* deleteSQL = "DELETE FROM LikedPlaylists WHERE user_id = ? AND playlist_id = ?;";
+
+    if (sqlite3_prepare_v2(db, deleteSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare DELETE statement: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);       
+    sqlite3_bind_int(stmt, 2, playlistId);    
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        if (sqlite3_changes(db) > 0) {
+            cout << "Playlist removed from your liked playlists.\n";
+        }
+        else {
+            cout << "That playlist was not in your liked playlists.\n";
+        }
+    }
+    else {
+        cout << "Failed to remove liked playlist: " << sqlite3_errmsg(db) << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
 
 
 
