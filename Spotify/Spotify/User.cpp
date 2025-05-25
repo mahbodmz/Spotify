@@ -205,9 +205,22 @@ void User::userMenu(sqlite3* db) {
             case 2:
                 addSongToMyPlaylist( db);
                 break;
-            case 3:
+            case 3: {
+                int choice;
                 viewSongsInMyPlaylist(db);
+                cout << "1.Delete a Song\n";
+                cin >> choice;
+                switch (choice)
+                {
+                case 1:
+                    removeSongFromMyPlaylist( db);
+                    break;
+                default:
+                    cout << "Invalid choice!!\n";
+                    break;
+                }
                 break;
+            }
             case 4:
                 system("cls");
                 break;
@@ -896,6 +909,96 @@ void User::viewSongsInMyPlaylist(sqlite3* db) {
     sqlite3_finalize(stmt);
 }
 
+void User::removeSongFromMyPlaylist(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    int playlistId;
+
+    // Step 1: Show user's playlists
+    cout << "\n--- Your Playlists ---\n";
+    const char* getPlaylistsSQL = "SELECT id, name FROM playlist WHERE creator_type = 'user' AND creator_id = ?;";
+    if (sqlite3_prepare_v2(db, getPlaylistsSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to fetch playlists: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, user_id);
+    bool hasPlaylists = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        hasPlaylists = true;
+        int id = sqlite3_column_int(stmt, 0);
+        const unsigned char* name = sqlite3_column_text(stmt, 1);
+        cout << "ID: " << id << " | Name: " << name << endl;
+    }
+    sqlite3_finalize(stmt);
+
+    if (!hasPlaylists) {
+        cout << "You haven't created any playlists.\n";
+        return;
+    }
+
+    // Step 2: Select playlist
+    cout << "\nEnter the ID of the playlist: ";
+    cin >> playlistId;
+
+    // Step 3: Show songs in the selected playlist
+    const char* getSongsSQL = R"(
+        SELECT song.id, song.title
+        FROM PlaylistSongs
+        JOIN song ON PlaylistSongs.song_id = song.id
+        WHERE PlaylistSongs.playlist_id = ?;
+    )";
+
+    if (sqlite3_prepare_v2(db, getSongsSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to fetch songs: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+    bool hasSongs = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        hasSongs = true;
+        int songId = sqlite3_column_int(stmt, 0);
+        const unsigned char* title = sqlite3_column_text(stmt, 1);
+        cout << "ID: " << songId << " | Title: " << title << endl;
+    }
+    sqlite3_finalize(stmt);
+
+    if (!hasSongs) {
+        cout << "This playlist has no songs.\n";
+        return;
+    }
+
+    // Step 4: Choose song to delete
+    int songIdToRemove;
+    cout << "\nEnter the ID of the song to remove: ";
+    cin >> songIdToRemove;
+
+    // Step 5: Delete from PlaylistSongs
+    const char* deleteSQL = "DELETE FROM PlaylistSongs WHERE playlist_id = ? AND song_id = ?;";
+    if (sqlite3_prepare_v2(db, deleteSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        cout << "Failed to prepare DELETE: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_int(stmt, 1, playlistId);
+    sqlite3_bind_int(stmt, 2, songIdToRemove);
+
+    if (sqlite3_step(stmt) == SQLITE_DONE) {
+        cout << "Song removed from playlist.\n";
+    }
+    else {
+        cout << "Failed to remove song: " << sqlite3_errmsg(db) << endl;
+    }
+    sqlite3_finalize(stmt);
+
+    // Step 6: Update num_songs in playlist
+    const char* updateSQL = "UPDATE playlist SET num_songs = num_songs - 1 WHERE id = ? AND num_songs > 0;";
+    if (sqlite3_prepare_v2(db, updateSQL, -1, &stmt, nullptr) == SQLITE_OK) {
+        sqlite3_bind_int(stmt, 1, playlistId);
+        sqlite3_step(stmt);
+        sqlite3_finalize(stmt);
+    }
+}
 
 
 
