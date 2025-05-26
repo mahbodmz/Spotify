@@ -11,6 +11,7 @@
 #include <cstdlib>  
 #include <ctime>
 
+
 using namespace std;
 
 
@@ -136,10 +137,53 @@ void User::userMenu(sqlite3* db) {
             system("cls");
             cout << "Logging out...\n";
             return;
-        case 1: 
+        case 1: {
+            int choice;
             system("cls");
             viewOrSearchSongs(db);
+            cout << "1.Filter songs\n";
+            cout << "2.Exit\n";
+            cin >> choice;
+            switch (choice)
+            {
+            case 1: {
+                int choice;
+
+                cout << "1.Filter based on artists name.\n";
+                cout << "2.Filter based on genre.\n";
+                cout << "3.Filter based on release date.\n";
+                cout << "4.View by Alphabetical order.\n";
+                cin >> choice;
+                switch (choice)
+                {
+                case 1:
+                    viewSongsByArtist(db);
+                    break;
+
+                case 2:
+                    viewSongsByGenre(db);
+                    break;
+                case 3:
+                    viewSongsByReleaseDate(db);
+                    break;
+                case 4:
+                    viewSongsInAlphabeticalOrder(db);
+                    break;
+                default:
+                    cout << "Invalid choice!!\n";
+                    break;
+                }
+                
+                break;
+            }
+            case 2:
+                break;
+            default:
+                cout << "Invalid choice!!\n";
+                break;
+            }
             break;
+        }
         
         case 2: {
             int choice;
@@ -165,10 +209,14 @@ void User::userMenu(sqlite3* db) {
             system("cls");
             
             viewSavedSongs(db);
+            
+            
             break;
-        }
+            
+         }
         case 4:
             system("cls");
+            viewAllSongs( db);
             saveSong(db);
             break;
         case 5: {
@@ -179,6 +227,7 @@ void User::userMenu(sqlite3* db) {
         }
         case 6:
             system("cls");
+            viewAllSongs( db);
             likeSong( db);
             break;
         case 7: {
@@ -599,7 +648,8 @@ void User::viewLikedSongs(sqlite3* db) {
         song.title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         song.artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
         song.genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-        // You can store release_date if needed
+        
+        
 
         songs.push_back(song);
 
@@ -1070,7 +1120,7 @@ void User::viewSongsInMyPlaylist(sqlite3* db) {
         song.title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
         song.artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
         song.genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
-        // duration and release_date could be stored if needed
+        
 
         songs.push_back(song);
 
@@ -1422,29 +1472,31 @@ void User::playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode) {
     int index = 0;
     bool playing = true;
 
-    // Ensure rand() is seeded only once
     srand(static_cast<unsigned int>(time(nullptr)));
 
     while (playing) {
         switch (mode) {
         case PlayMode::IN_ORDER:
             std::cout << "Now playing: " << songs[index].title << " by " << songs[index].artist << std::endl;
-            std::this_thread::sleep_for(std::chrono::seconds(3));
+            std::cout << "Press Enter to go to the next song." << std::endl;
+            std::cin.ignore();  
+            std::cin.get();  
             index++;
             if (index >= songs.size()) playing = false;
             break;
 
         case PlayMode::RANDOM: {
             while (playing) {
-                int randomIndex = rand() % songs.size();  
+                int randomIndex = rand() % songs.size();
                 std::cout << "Now playing (Random): " << songs[randomIndex].title << " by " << songs[randomIndex].artist << std::endl;
-                std::this_thread::sleep_for(std::chrono::seconds(3));
+                std::cout << "Press Enter to go to the next song." << std::endl;
+                std::cin.ignore();  
+                std::cin.get();  
 
-                
-                std::cout << "Press any key to stop or continue playing." << std::endl;
+                std::cout << "Press 'q' to stop or any other key to continue playing." << std::endl;
                 char userInput;
-                std::cin >> userInput;  
-                if (userInput == 'q') {  
+                std::cin >> userInput;
+                if (userInput == 'q') {
                     playing = false;
                 }
             }
@@ -1452,7 +1504,6 @@ void User::playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode) {
         }
 
         case PlayMode::REPEAT_ONE:
-            // Prompt the user to choose a song to repeat
             cout << "Select a song to repeat:" << endl;
             for (int i = 0; i < songs.size(); ++i) {
                 cout << i + 1 << ". " << songs[i].title << " by " << songs[i].artist << endl;
@@ -1461,21 +1512,22 @@ void User::playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode) {
             int songChoice;
             cout << "Enter song number to repeat: ";
             cin >> songChoice;
-            songChoice--;  // Adjust for zero-based indexing
+            songChoice--;
 
             if (songChoice >= 0 && songChoice < songs.size()) {
                 cout << "Now playing (Repeat One): " << songs[songChoice].title << " by " << songs[songChoice].artist << endl;
                 while (playing) {
-                    // Play the chosen song on repeat
-                    cout << "Now playing: " << songs[songChoice].title << " by " << songs[songChoice].artist << endl;
-                    this_thread::sleep_for(std::chrono::seconds(3));
+                    std::cout << "Now playing: " << songs[songChoice].title << " by " << songs[songChoice].artist << std::endl;
+                    std::cout << "Press Enter to go to the next song or 'q' to quit." << std::endl;
 
-                    // You can add conditions to stop or loop this as needed
-                    cout << "Press 'q' to stop repeating or any other key to continue repeating: ";
+                    std::cin.ignore();  
+                    std::cin.get();  
+
+                    std::cout << "Press 'q' to stop repeating or any other key to continue repeating: ";
                     char userInput;
                     cin >> userInput;
                     if (userInput == 'q') {
-                        playing = false;  // Stop when the user presses 'q'
+                        playing = false;
                     }
                 }
             }
@@ -1485,36 +1537,38 @@ void User::playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode) {
             break;
 
         case PlayMode::LOOP_ALL:
-        {
             while (playing) {
-                cout << "Now playing (Loop All): " << songs[index].title << " by " << songs[index].artist << endl;
-                this_thread::sleep_for(std::chrono::seconds(3));
+                std::cout << "Now playing (Loop All): " << songs[index].title << " by " << songs[index].artist << std::endl;
+                std::cout << "Press Enter to go to the next song." << std::endl;
+                std::cin.ignore();  // Wait for user input
+                std::cin.get();  // User must press Enter to continue
 
-                cout << "Press 'e' to exit loop or any other key to continue: ";
+                std::cout << "Press 'e' to exit loop or any other key to continue: ";
                 char userInput;
-                cin >> userInput;
+                std::cin >> userInput;
                 if (userInput == 'e') {
                     playing = false;
-                    cout << "Exiting loop.\n";
+                    std::cout << "Exiting loop.\n";
                 }
                 else {
                     index++;
                     if (index >= songs.size()) {
-                        index = 0;  // Loop back to the beginning
+                        index = 0;
                     }
                 }
             }
             break;
         }
-
-        }
     }
 }
+
+
+
+
 
 void User::viewArtistProfiles(sqlite3* db) {
     sqlite3_stmt* stmt;
 
-    // Step 1: List all artists
     const char* listArtistsSQL = "SELECT id, name FROM artist;";
     if (sqlite3_prepare_v2(db, listArtistsSQL, -1, &stmt, nullptr) != SQLITE_OK) {
         cout << "Failed to fetch artists: " << sqlite3_errmsg(db) << endl;
@@ -1536,12 +1590,12 @@ void User::viewArtistProfiles(sqlite3* db) {
         return;
     }
 
-    // Step 2: Ask user to select an artist
+    
     int selectedId;
     cout << "\nEnter the ID of the artist to view their profile: ";
     cin >> selectedId;
 
-    // Fetch selected artist's profile
+    
     const char* profileSQL = "SELECT name, num_albums, num_songs FROM artist WHERE id = ?;";
     if (sqlite3_prepare_v2(db, profileSQL, -1, &stmt, nullptr) != SQLITE_OK) {
         cout << "Failed to prepare artist profile query: " << sqlite3_errmsg(db) << endl;
@@ -1565,7 +1619,7 @@ void User::viewArtistProfiles(sqlite3* db) {
     }
     sqlite3_finalize(stmt);
 
-    // Fetch and print artist's songs
+    
     const char* songsSQL = "SELECT id, title, genre, release_date, duration FROM song WHERE artist_id = ?;";
     if (sqlite3_prepare_v2(db, songsSQL, -1, &stmt, nullptr) != SQLITE_OK) {
         cout << "Failed to prepare song list: " << sqlite3_errmsg(db) << endl;
@@ -1593,6 +1647,189 @@ void User::viewArtistProfiles(sqlite3* db) {
 
     sqlite3_finalize(stmt);
 }
+
+void User::viewSongsByArtist(sqlite3* db) {
+    string artistName;
+    cout << "Enter the name of the artist: ";
+    cin.ignore();  
+    getline(cin, artistName);
+
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT song.id, song.title, song.artist, song.genre, song.release_date FROM song "
+        "WHERE song.artist = ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare song query: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, artistName.c_str(), -1, SQLITE_STATIC);
+
+    cout << "\n--- Songs by Artist: " << artistName << " ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        string genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        string releaseDate = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist
+            << " | Genre: " << genre << " | Release Date: " << releaseDate << endl;
+    }
+
+    if (!found) {
+        cout << "No songs found for artist: " << artistName << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::viewSongsByGenre(sqlite3* db) {
+    string genreName;
+    cout << "Enter the genre: ";
+    cin.ignore();  
+    getline(cin, genreName);
+
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT song.id, song.title, song.artist, song.genre, song.release_date FROM song "
+        "WHERE song.genre = ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare song query: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, genreName.c_str(), -1, SQLITE_STATIC);
+
+    cout << "\n--- Songs of Genre: " << genreName << " ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        string genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        string releaseDate = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist
+            << " | Genre: " << genre << " | Release Date: " << releaseDate << endl;
+    }
+
+    if (!found) {
+        cout << "No songs found for genre: " << genreName << endl;
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::viewSongsByReleaseDate(sqlite3* db) {
+    string startYear, endYear;
+    cout << "Enter the start year (YYYY): ";
+    cin >> startYear;
+    cout << "Enter the end year (YYYY): ";
+    cin >> endYear;
+
+    if (startYear > endYear) {
+        cout << "Start year cannot be greater than end year.\n";
+        return;
+    }
+
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT song.id, song.title, song.artist, song.genre, song.release_date FROM song "
+        "WHERE substr(song.release_date, 1, 4) BETWEEN ? AND ?;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare song query: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    sqlite3_bind_text(stmt, 1, startYear.c_str(), -1, SQLITE_STATIC);
+    sqlite3_bind_text(stmt, 2, endYear.c_str(), -1, SQLITE_STATIC);
+
+    cout << "\n--- Songs Released Between " << startYear << " and " << endYear << " ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        string genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        string releaseDate = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist
+            << " | Genre: " << genre << " | Release Date: " << releaseDate << endl;
+    }
+
+    if (!found) {
+        cout << "No songs found for the specified release date range.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+void User::viewSongsInAlphabeticalOrder(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    const char* sql = "SELECT id, title, artist, genre, release_date FROM song ORDER BY title ASC;";
+
+    if (sqlite3_prepare_v2(db, sql, -1, &stmt, nullptr) != SQLITE_OK) {
+        cerr << "Failed to prepare song query: " << sqlite3_errmsg(db) << endl;
+        return;
+    }
+
+    cout << "\n--- Songs in Alphabetical Order ---\n";
+    bool found = false;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        found = true;
+        int id = sqlite3_column_int(stmt, 0);
+        string title = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1));
+        string artist = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 2));
+        string genre = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 3));
+        string releaseDate = reinterpret_cast<const char*>(sqlite3_column_text(stmt, 4));
+
+        cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist
+            << " | Genre: " << genre << " | Release Date: " << releaseDate << endl;
+    }
+
+    if (!found) {
+        cout << "No songs found.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+void User::viewAllSongs(sqlite3* db) {
+    sqlite3_stmt* stmt;
+    const char* selectSQL = "SELECT id, title, artist, release_date, genre FROM song;";  // Query to fetch all songs
+
+    if (sqlite3_prepare_v2(db, selectSQL, -1, &stmt, nullptr) != SQLITE_OK) {
+        std::cout << "Failed to prepare SELECT statement: " << sqlite3_errmsg(db) << std::endl;
+        return;
+    }
+
+    int rowCount = 0;
+    while (sqlite3_step(stmt) == SQLITE_ROW) {
+        int id = sqlite3_column_int(stmt, 0);  
+        const char* title = (const char*)sqlite3_column_text(stmt, 1);  
+        const char* artist = (const char*)sqlite3_column_text(stmt, 2);  
+        const char* release_date = (const char*)sqlite3_column_text(stmt, 3);  
+        const char* genre = (const char*)sqlite3_column_text(stmt, 4);
+
+        
+        std::cout << "ID: " << id << " | Title: " << title << " | Artist: " << artist
+            << " | Release Date: " << release_date << " | Genre: " << genre << std::endl;
+
+        rowCount++;
+    }
+
+    if (rowCount == 0) {
+        std::cout << "No songs found in the system.\n";
+    }
+
+    sqlite3_finalize(stmt);
+}
+
+
 
 
 

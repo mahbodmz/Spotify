@@ -38,9 +38,11 @@ bool Admin::login() {
     if (sqlite3_step(stmt) == SQLITE_ROW) {
         cout << "Login successful. Welcome, " << inputUsername << "!\n";
         loginSuccess = true;
+        return true;
     }
     else {
         cout << "Login failed. Invalid credentials.\n";
+        return false;
     }
 
     sqlite3_finalize(stmt);

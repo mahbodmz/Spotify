@@ -16,6 +16,7 @@ struct SimpleSong {
     std::string title;
     std::string artist;
     std::string genre;
+    
 };
 
 
@@ -55,8 +56,11 @@ public:
     void viewSongsInAnyPlaylist(sqlite3* db);
     void playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode);
     void viewArtistProfiles(sqlite3* db);
-
-
+    void viewSongsByArtist(sqlite3* db);
+    void viewSongsByGenre(sqlite3* db);
+    void viewSongsByReleaseDate(sqlite3* db);
+    void viewSongsInAlphabeticalOrder(sqlite3* db);
+    void viewAllSongs(sqlite3* db);
     
     
 };

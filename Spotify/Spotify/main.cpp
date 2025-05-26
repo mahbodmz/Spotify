@@ -37,8 +37,12 @@ int main() {
         case(1): {
             system("cls");
              Admin admin;
-             admin.login();
-             admin.adminMenu(db);
+             
+             if (admin.login())
+             {
+                 admin.adminMenu(db);
+             }
+             
              break;
         }
         case(2): { 
@@ -52,13 +56,13 @@ int main() {
 
             if (userChoice == 1) {
                 if (user.login(db)) {
-                    user.userMenu(db);  // only proceed to menu if login was successful
+                    user.userMenu(db);  
                 }
                 
             }
             else if (userChoice == 2) {
                 if (user.signUp(db)) {
-                    user.userMenu(db);  // go to menu after successful sign-up
+                    user.userMenu(db);  
                 }
             }
             break;
