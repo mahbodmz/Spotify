@@ -32,7 +32,7 @@ public:
     bool signUp(sqlite3* db);
     void userMenu(sqlite3* db);
     void viewOrSearchSongs(sqlite3* db);
-    void viewAllPlaylists(sqlite3* db);
+    void viewOrSearchPlaylists(sqlite3* db);
     int getUserId();
     void saveSong(sqlite3* db);
     void viewSavedSongs(sqlite3* db);
@@ -54,6 +54,7 @@ public:
     void viewSongsInLikedPlaylist(sqlite3* db);
     void viewSongsInAnyPlaylist(sqlite3* db);
     void playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode);
+    void viewArtistProfiles(sqlite3* db);
 
 
     
