@@ -3,6 +3,20 @@
 
 #include <string>
 #include"sqlite3.h"
+#include<vector>
+enum class PlayMode {
+    IN_ORDER,
+    RANDOM,
+    REPEAT_ONE,
+    LOOP_ALL
+};
+
+struct SimpleSong {
+    int id;
+    std::string title;
+    std::string artist;
+    std::string genre;
+};
 
 
 class User {
@@ -39,6 +53,9 @@ public:
     void removeSongFromMyPlaylist(sqlite3* db);
     void viewSongsInLikedPlaylist(sqlite3* db);
     void viewSongsInAnyPlaylist(sqlite3* db);
+    void playPlaylist(const std::vector<SimpleSong>& songs, PlayMode mode);
+
+
     
     
 };
